@@ -47,7 +47,6 @@ final class BankSectionLayout
 		for (int i = 0; i < items.size(); i++)
 		{
 			Widget item = items.get(i);
-			item.setHidden(false);
 			item.setOriginalX(BankTagsPlugin.BANK_ITEM_START_X + i * ITEM_HORIZONTAL_SPACING);
 			item.setOriginalY(HEADER_HEIGHT);
 			item.revalidate();

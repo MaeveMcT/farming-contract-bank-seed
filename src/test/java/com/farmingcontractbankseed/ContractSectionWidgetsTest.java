@@ -29,6 +29,18 @@ public class ContractSectionWidgetsTest
 		assertSame(sapling, result.get(1));
 	}
 
+	@Test
+	public void doesNotSelectAnItemHiddenByTheActiveBankTab()
+	{
+		Widget hiddenSeed = itemWidget(ItemID.MAGIC_TREE_SEED);
+		when(hiddenSeed.isHidden()).thenReturn(true);
+
+		List<Widget> result = ContractSectionWidgets.findExisting(
+			new Widget[]{hiddenSeed}, Arrays.asList(ItemID.MAGIC_TREE_SEED));
+
+		assertEquals(0, result.size());
+	}
+
 	private static Widget itemWidget(int itemId)
 	{
 		Widget widget = mock(Widget.class);

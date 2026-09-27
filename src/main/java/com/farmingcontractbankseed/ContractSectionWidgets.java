@@ -17,7 +17,7 @@ final class ContractSectionWidgets
 		{
 			for (Widget bankWidget : bankWidgets)
 			{
-				if (bankWidget.getItemId() == itemId)
+				if (!bankWidget.isHidden() && bankWidget.getItemId() == itemId)
 				{
 					result.add(bankWidget);
 					break;

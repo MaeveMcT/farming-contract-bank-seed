@@ -69,8 +69,9 @@ public class FarmingContractBankSeedPlugin extends Plugin
 	@Subscribe
 	public void onScriptPreFired(ScriptPreFired event)
 	{
-		if (event.getScriptId() == ScriptID.BANKMAIN_FINISHBUILDING)
+		if (event.getScriptId() == ScriptID.BANKMAIN_BUILD)
 		{
+			// Restore before the game lays out and hides items for the selected tab.
 			restoreLayout();
 		}
 	}
@@ -129,15 +130,15 @@ public class FarmingContractBankSeedPlugin extends Plugin
 			return;
 		}
 
-		modifiedContainer = itemContainer;
-		originalChildrenCount = originalChildren.length;
-		originalScrollHeight = itemContainer.getScrollHeight();
-
 		List<Widget> sectionItems = ContractSectionWidgets.findExisting(originalChildren, contractItems);
 		if (sectionItems.isEmpty())
 		{
 			return;
 		}
+
+		modifiedContainer = itemContainer;
+		originalChildrenCount = originalChildren.length;
+		originalScrollHeight = itemContainer.getScrollHeight();
 
 		for (Widget child : originalChildren)
 		{
@@ -173,7 +174,6 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		{
 			position.widget.setOriginalX(position.x);
 			position.widget.setOriginalY(position.y);
-			position.widget.setHidden(position.hidden);
 			position.widget.revalidate();
 		}
 		shiftedWidgets.clear();
@@ -198,14 +198,11 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		private final Widget widget;
 		private final int x;
 		private final int y;
-		private final boolean hidden;
-
 		private WidgetPosition(Widget widget)
 		{
 			this.widget = widget;
 			this.x = widget.getOriginalX();
 			this.y = widget.getOriginalY();
-			this.hidden = widget.isSelfHidden();
 		}
 	}
 }
