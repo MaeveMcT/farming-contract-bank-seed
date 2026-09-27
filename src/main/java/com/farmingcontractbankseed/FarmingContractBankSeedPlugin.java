@@ -6,16 +6,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
+import com.google.inject.Provides;
 import net.runelite.api.Client;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.api.ScriptID;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.ScriptPreFired;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
@@ -25,7 +29,7 @@ import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
 
 @PluginDescriptor(
 	name = "Farming Contract Bank Seed",
-	description = "Shows banked seeds and saplings for an unplanted Farming Guild contract",
+	description = "Shows banked Farming Guild contract and preplant seeds and saplings",
 	tags = {"farming", "contracts", "bank", "seeds", "saplings"}
 )
 @PluginDependency(TimeTrackingPlugin.class)
@@ -45,6 +49,15 @@ public class FarmingContractBankSeedPlugin extends Plugin
 
 	@Inject
 	private FarmingContractManager contractManager;
+
+	@Inject
+	private FarmingContractBankSeedConfig config;
+
+	@Provides
+	FarmingContractBankSeedConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(FarmingContractBankSeedConfig.class);
+	}
 
 	private final List<WidgetPosition> shiftedWidgets = new ArrayList<>();
 	private Widget modifiedContainer;
@@ -88,11 +101,31 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		}
 		else if (event.getScriptId() == ScriptID.BANKMAIN_FINISHBUILDING)
 		{
-			clientThread.invokeAtTickEnd(this::showContractSection);
+			clientThread.invokeAtTickEnd(this::showBankSections);
 		}
 	}
 
-	private void showContractSection()
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		if (running && PreplantSeeds.isGuildPatchVarbit(event.getVarbitId())
+			&& client.getWidget(InterfaceID.Bankmain.ITEMS) != null
+			&& client.getItemContainer(InventoryID.BANK) != null)
+		{
+			clientThread.invokeAtTickEnd(this::showBankSections);
+		}
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (FarmingContractBankSeedConfig.GROUP.equals(event.getGroup()))
+		{
+			clientThread.invokeAtTickEnd(this::showBankSections);
+		}
+	}
+
+	private void showBankSections()
 	{
 		if (!running || bankViewFiltered)
 		{
@@ -101,9 +134,7 @@ public class FarmingContractBankSeedPlugin extends Plugin
 
 		restoreLayout();
 
-		if (!isInFarmingGuild()
-			|| !contractManager.hasContract()
-			|| !ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState()))
+		if (!isInFarmingGuild())
 		{
 			return;
 		}
@@ -121,21 +152,28 @@ public class FarmingContractBankSeedPlugin extends Plugin
 			return;
 		}
 
-		int produceItemId = contractManager.getContract().getItemID();
-		List<Integer> contractItems = new ArrayList<>(2);
-		addIfBanked(contractItems, bank, ContractSeedCatalog.seedForProduce(produceItemId));
-		addIfBanked(contractItems, bank, ContractSeedCatalog.saplingForProduce(produceItemId));
-		if (contractItems.isEmpty())
+		List<Integer> contractIds = new ArrayList<>(2);
+		if (contractManager.hasContract()
+			&& ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState()))
+		{
+			int produceItemId = contractManager.getContract().getItemID();
+			addIfBanked(contractIds, bank, ContractSeedCatalog.seedForProduce(produceItemId));
+			addIfBanked(contractIds, bank, ContractSeedCatalog.saplingForProduce(produceItemId));
+		}
+		List<Widget> contractWidgets = ContractSectionWidgets.findExisting(originalChildren, contractIds);
+
+		List<Integer> preplantIds = PreplantSeeds.itemIds(config, client::getVarbitValue);
+		preplantIds.removeAll(contractIds); // The contract section owns shared seeds and saplings.
+		preplantIds.removeIf(id -> bank.find(id) < 0);
+		List<Widget> preplantWidgets = ContractSectionWidgets.findExisting(originalChildren, preplantIds);
+		if (contractWidgets.isEmpty() && preplantWidgets.isEmpty())
 		{
 			return;
 		}
 
-		List<Widget> sectionItems = ContractSectionWidgets.findExisting(originalChildren, contractItems);
-		if (sectionItems.isEmpty())
-		{
-			return;
-		}
-
+		int contractHeight = contractWidgets.isEmpty() ? 0 : BankSectionLayout.sectionHeight(contractWidgets.size());
+		int preplantHeight = preplantWidgets.isEmpty() ? 0 : BankSectionLayout.sectionHeight(preplantWidgets.size());
+		int totalHeight = contractHeight + preplantHeight;
 		modifiedContainer = itemContainer;
 		originalChildrenCount = originalChildren.length;
 		originalScrollHeight = itemContainer.getScrollHeight();
@@ -143,14 +181,22 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		for (Widget child : originalChildren)
 		{
 			shiftedWidgets.add(new WidgetPosition(child));
-			child.setOriginalY(child.getOriginalY() + BankSectionLayout.SECTION_HEIGHT);
+			child.setOriginalY(child.getOriginalY() + totalHeight);
 			child.revalidate();
 		}
 
-		BankSectionLayout.placeItems(sectionItems);
-		BankSectionLayout.createHeader(itemContainer, "Farming contract");
+		if (!contractWidgets.isEmpty())
+		{
+			BankSectionLayout.placeItems(contractWidgets, 0);
+			BankSectionLayout.createHeader(itemContainer, "Farming contract", 0, contractWidgets.size());
+		}
+		if (!preplantWidgets.isEmpty())
+		{
+			BankSectionLayout.placeItems(preplantWidgets, contractHeight);
+			BankSectionLayout.createHeader(itemContainer, "Preplant seeds/saplings", contractHeight, preplantWidgets.size());
+		}
 
-		itemContainer.setScrollHeight(originalScrollHeight + BankSectionLayout.SECTION_HEIGHT);
+		itemContainer.setScrollHeight(originalScrollHeight + totalHeight);
 		itemContainer.revalidate();
 	}
 

@@ -23,7 +23,11 @@ final class BankSectionLayout
 	private static final int SECTION_CONTENT_HEIGHT = HEADER_HEIGHT + ITEM_VERTICAL_SPACING;
 	private static final int BANK_ITEMS_GAP = 12;
 
-	static final int SECTION_HEIGHT = SECTION_CONTENT_HEIGHT + BANK_ITEMS_GAP;
+	static int sectionHeight(int itemCount)
+	{
+		int rows = (itemCount + BankTagsPlugin.BANK_ITEMS_PER_ROW - 1) / BankTagsPlugin.BANK_ITEMS_PER_ROW;
+		return HEADER_HEIGHT + rows * ITEM_VERTICAL_SPACING + BANK_ITEMS_GAP;
+	}
 
 	private BankSectionLayout()
 	{
@@ -44,24 +48,24 @@ final class BankSectionLayout
 		return false;
 	}
 
-	static void placeItems(List<Widget> items)
+	static void placeItems(List<Widget> items, int top)
 	{
 		for (int i = 0; i < items.size(); i++)
 		{
 			Widget item = items.get(i);
-			item.setOriginalX(BankTagsPlugin.BANK_ITEM_START_X + i * ITEM_HORIZONTAL_SPACING);
-			item.setOriginalY(HEADER_HEIGHT);
+			item.setOriginalX(BankTagsPlugin.BANK_ITEM_START_X + (i % BankTagsPlugin.BANK_ITEMS_PER_ROW) * ITEM_HORIZONTAL_SPACING);
+			item.setOriginalY(top + HEADER_HEIGHT + (i / BankTagsPlugin.BANK_ITEMS_PER_ROW) * ITEM_VERTICAL_SPACING);
 			item.revalidate();
 		}
 	}
 
-	static void createHeader(Widget container, String text)
+	static void createHeader(Widget container, String text, int top, int itemCount)
 	{
 		Widget divider = container.createChild(-1, WidgetType.GRAPHIC);
 		divider.setOriginalWidth(SECTION_WIDTH);
 		divider.setOriginalHeight(2);
 		divider.setOriginalX(BankTagsPlugin.BANK_ITEM_START_X);
-		divider.setOriginalY(SECTION_CONTENT_HEIGHT - 2);
+		divider.setOriginalY(top + sectionHeight(itemCount) - BANK_ITEMS_GAP - 2);
 		divider.setSpriteId(SpriteID.TRADEBACKING_DARK);
 		divider.revalidate();
 
@@ -69,7 +73,7 @@ final class BankSectionLayout
 		title.setOriginalWidth(SECTION_WIDTH);
 		title.setOriginalHeight(15);
 		title.setOriginalX(BankTagsPlugin.BANK_ITEM_START_X);
-		title.setOriginalY(5);
+		title.setOriginalY(top + 5);
 		title.setText(text);
 		title.setFontId(FontID.PLAIN_11);
 		title.setTextColor(new Color(228, 216, 162).getRGB());
