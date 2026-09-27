@@ -20,8 +20,10 @@ final class BankSectionLayout
 		BankTagsPlugin.BANK_ITEM_HEIGHT + BankTagsPlugin.BANK_ITEM_Y_PADDING;
 	private static final int HEADER_HEIGHT = 20;
 	private static final int SECTION_WIDTH = BankTagsPlugin.BANK_ITEMS_PER_ROW * ITEM_HORIZONTAL_SPACING;
+	private static final int SECTION_CONTENT_HEIGHT = HEADER_HEIGHT + ITEM_VERTICAL_SPACING;
+	private static final int BANK_ITEMS_GAP = 12;
 
-	static final int SECTION_HEIGHT = HEADER_HEIGHT + ITEM_VERTICAL_SPACING;
+	static final int SECTION_HEIGHT = SECTION_CONTENT_HEIGHT + BANK_ITEMS_GAP;
 
 	private BankSectionLayout()
 	{
@@ -59,7 +61,7 @@ final class BankSectionLayout
 		divider.setOriginalWidth(SECTION_WIDTH);
 		divider.setOriginalHeight(2);
 		divider.setOriginalX(BankTagsPlugin.BANK_ITEM_START_X);
-		divider.setOriginalY(SECTION_HEIGHT - 2);
+		divider.setOriginalY(SECTION_CONTENT_HEIGHT - 2);
 		divider.setSpriteId(SpriteID.TRADEBACKING_DARK);
 		divider.revalidate();
 
