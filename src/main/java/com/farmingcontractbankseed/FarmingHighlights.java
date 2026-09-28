@@ -23,7 +23,7 @@ final class FarmingHighlights
 		FarmingContractManager contractManager, IntUnaryOperator varbits)
 	{
 		List<PreplantSeeds.Patch> patches = new ArrayList<>();
-		if (config.highlightContractPatch() && contractManager.hasContract())
+		if (config.highlightContractPatch() && contractManager != null && contractManager.hasContract())
 		{
 			patches.addAll(contractPatches(contractManager.getContract(),
 				ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState()), varbits));

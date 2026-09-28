@@ -1,8 +1,10 @@
 package com.farmingcontractbankseed;
 
+import com.google.inject.Injector;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.runelite.api.Client;
 import net.runelite.api.ItemContainer;
@@ -13,8 +15,10 @@ import net.runelite.api.gameval.ItemID;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
-import net.runelite.client.plugins.timetracking.farming.Produce;
+import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
 import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
+import net.runelite.client.plugins.timetracking.farming.Produce;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.junit.Test;
 
@@ -270,6 +274,13 @@ public class BankSectionsTest
 		inject(plugin, "overlayManager", mock(OverlayManager.class));
 		inject(plugin, "patchOverlay", mock(PreplantPatchOverlay.class));
 		inject(plugin, "inventoryOverlay", mock(PreplantInventoryOverlay.class));
+		TimeTrackingPlugin timeTrackingPlugin = mock(TimeTrackingPlugin.class);
+		Injector injector = mock(Injector.class);
+		when(timeTrackingPlugin.getInjector()).thenReturn(injector);
+		when(injector.getInstance(FarmingContractManager.class)).thenReturn(plugin.getContractManager());
+		PluginManager pluginManager = mock(PluginManager.class);
+		when(pluginManager.getPlugins()).thenReturn(Collections.singletonList(timeTrackingPlugin));
+		inject(plugin, "pluginManager", pluginManager);
 		plugin.startUp();
 	}
 

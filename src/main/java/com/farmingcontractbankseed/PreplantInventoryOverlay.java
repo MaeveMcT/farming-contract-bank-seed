@@ -9,7 +9,6 @@ import net.runelite.api.Client;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 class PreplantInventoryOverlay extends WidgetItemOverlay
@@ -17,17 +16,15 @@ class PreplantInventoryOverlay extends WidgetItemOverlay
 	private final Client client;
 	private final FarmingContractBankSeedConfig config;
 	private final FarmingContractBankSeedPlugin plugin;
-	private final FarmingContractManager contractManager;
 	private final ItemManager itemManager;
 
 	@Inject
 	PreplantInventoryOverlay(Client client, FarmingContractBankSeedConfig config,
-		FarmingContractBankSeedPlugin plugin, FarmingContractManager contractManager, ItemManager itemManager)
+		FarmingContractBankSeedPlugin plugin, ItemManager itemManager)
 	{
 		this.client = client;
 		this.config = config;
 		this.plugin = plugin;
-		this.contractManager = contractManager;
 		this.itemManager = itemManager;
 		showOnInterfaces(InterfaceID.INVENTORY, InterfaceID.BANKSIDE);
 	}
@@ -40,7 +37,7 @@ class PreplantInventoryOverlay extends WidgetItemOverlay
 			return;
 		}
 		List<PreplantSeeds.Patch> matches = new ArrayList<>();
-		for (PreplantSeeds.Patch patch : FarmingHighlights.readyPatches(config, contractManager, client::getVarbitValue))
+		for (PreplantSeeds.Patch patch : FarmingHighlights.readyPatches(config, plugin.getContractManager(), client::getVarbitValue))
 		{
 			if (patch.matches(itemId))
 			{

@@ -13,7 +13,6 @@ import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.Perspective;
 import net.runelite.api.Tile;
-import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -24,17 +23,14 @@ class PreplantPatchOverlay extends Overlay
 	private final Client client;
 	private final FarmingContractBankSeedConfig config;
 	private final FarmingContractBankSeedPlugin plugin;
-	private final FarmingContractManager contractManager;
 	private final Map<GameObject, Color> patches = new LinkedHashMap<>();
 
 	@Inject
-	PreplantPatchOverlay(Client client, FarmingContractBankSeedConfig config, FarmingContractBankSeedPlugin plugin,
-		FarmingContractManager contractManager)
+	PreplantPatchOverlay(Client client, FarmingContractBankSeedConfig config, FarmingContractBankSeedPlugin plugin)
 	{
 		this.client = client;
 		this.config = config;
 		this.plugin = plugin;
-		this.contractManager = contractManager;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 	}
@@ -49,7 +45,7 @@ class PreplantPatchOverlay extends Overlay
 		}
 
 		Map<Integer, Color> colors = new LinkedHashMap<>();
-		for (PreplantSeeds.Patch patch : FarmingHighlights.readyPatches(config, contractManager, client::getVarbitValue))
+		for (PreplantSeeds.Patch patch : FarmingHighlights.readyPatches(config, plugin.getContractManager(), client::getVarbitValue))
 		{
 			colors.put(patch.varbit, patch.color);
 		}

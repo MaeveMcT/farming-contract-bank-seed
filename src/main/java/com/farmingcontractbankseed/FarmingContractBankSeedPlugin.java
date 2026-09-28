@@ -23,8 +23,8 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
 import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -34,7 +34,6 @@ import net.runelite.client.ui.overlay.OverlayManager;
 	description = "Shows banked Farming Guild contract and preplant seeds and saplings",
 	tags = {"farming", "contracts", "bank", "seeds", "saplings"}
 )
-@PluginDependency(TimeTrackingPlugin.class)
 public class FarmingContractBankSeedPlugin extends Plugin
 {
 	private static final Set<Integer> FARMING_GUILD_REGIONS = new HashSet<>(Arrays.asList(
@@ -50,6 +49,8 @@ public class FarmingContractBankSeedPlugin extends Plugin
 	private ClientThread clientThread;
 
 	@Inject
+	private PluginManager pluginManager;
+
 	private FarmingContractManager contractManager;
 
 	@Inject
@@ -80,6 +81,12 @@ public class FarmingContractBankSeedPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
+		// Time Tracking does not expose a public Guice module in RuneLite 1.13.
+		// Use its existing manager, rather than constructing a second, unsynchronised one.
+		contractManager = pluginManager.getPlugins().stream()
+			.filter(TimeTrackingPlugin.class::isInstance)
+			.map(plugin -> plugin.getInjector().getInstance(FarmingContractManager.class))
+			.findFirst().orElse(null);
 		running = true;
 		overlayManager.add(patchOverlay);
 		overlayManager.add(inventoryOverlay);
@@ -92,6 +99,7 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		overlayManager.remove(patchOverlay);
 		overlayManager.remove(inventoryOverlay);
 		patchOverlay.clear();
+		contractManager = null;
 		restoreLayout();
 	}
 
@@ -176,7 +184,7 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		}
 
 		List<Integer> contractIds = new ArrayList<>(2);
-		boolean hasContractToPlant = contractManager.hasContract()
+		boolean hasContractToPlant = contractManager != null && contractManager.hasContract()
 			&& ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState());
 		if (hasContractToPlant)
 		{
@@ -247,6 +255,11 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		{
 			items.add(itemId);
 		}
+	}
+
+	FarmingContractManager getContractManager()
+	{
+		return contractManager;
 	}
 
 	boolean isInFarmingGuild()
