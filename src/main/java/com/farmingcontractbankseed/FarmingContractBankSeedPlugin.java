@@ -166,6 +166,22 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		preplantIds.removeAll(contractIds); // The contract section owns shared seeds and saplings.
 		preplantIds.removeIf(id -> bank.find(id) < 0);
 		List<Widget> preplantWidgets = ContractSectionWidgets.findExisting(originalChildren, preplantIds);
+		if (!contractWidgets.isEmpty() || !preplantWidgets.isEmpty())
+		{
+			for (int compostId : config.compost().itemIds())
+			{
+				if (bank.find(compostId) < 0)
+				{
+					continue;
+				}
+				List<Widget> compostWidgets = ContractSectionWidgets.findExisting(originalChildren, Arrays.asList(compostId));
+				if (!compostWidgets.isEmpty())
+				{
+					(!contractWidgets.isEmpty() ? contractWidgets : preplantWidgets).addAll(compostWidgets);
+					break;
+				}
+			}
+		}
 		if (contractWidgets.isEmpty() && preplantWidgets.isEmpty())
 		{
 			return;

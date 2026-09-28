@@ -81,11 +81,13 @@ public class BankSectionsTest
 		Widget container = mock(Widget.class);
 		Widget contractSeed = mock(Widget.class);
 		Widget preplantSeed = mock(Widget.class);
+		Widget compost = mock(Widget.class);
 		when(contractSeed.getItemId()).thenReturn(ItemID.WATERMELON_SEED);
 		when(contractSeed.getOriginalWidth()).thenReturn(36);
 		when(contractSeed.getOriginalHeight()).thenReturn(32);
 		when(preplantSeed.getItemId()).thenReturn(ItemID.ONION_SEED);
-		when(container.getChildren()).thenReturn(new Widget[]{contractSeed, preplantSeed});
+		when(compost.getItemId()).thenReturn(ItemID.BUCKET_COMPOST);
+		when(container.getChildren()).thenReturn(new Widget[]{contractSeed, preplantSeed, compost});
 		when(container.getScrollHeight()).thenReturn(200);
 		when(container.createChild(-1, WidgetType.GRAPHIC)).thenReturn(mock(Widget.class));
 		when(container.createChild(-1, WidgetType.TEXT)).thenReturn(mock(Widget.class));
@@ -95,9 +97,11 @@ public class BankSectionsTest
 		when(bank.find(anyInt())).thenReturn(-1);
 		when(bank.find(ItemID.WATERMELON_SEED)).thenReturn(1);
 		when(bank.find(ItemID.ONION_SEED)).thenReturn(2);
+		when(bank.find(ItemID.BUCKET_COMPOST)).thenReturn(3);
 		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
 		when(config.northAllotment()).thenReturn(PreplantChoice.Allotment.WATERMELON);
 		when(config.southAllotment()).thenReturn(PreplantChoice.Allotment.ONION);
+		when(config.compost()).thenReturn(CompostChoice.COMPOST);
 		FarmingContractManager contracts = mock(FarmingContractManager.class);
 		when(contracts.hasContract()).thenReturn(true);
 		when(contracts.getContract()).thenReturn(Produce.WATERMELON);
@@ -111,8 +115,91 @@ public class BankSectionsTest
 		show.invoke(plugin);
 
 		verify(contractSeed).setOriginalY(20);
-		verify(preplantSeed).setOriginalY(BankSectionLayout.sectionHeight(1) + 20);
-		verify(container).setScrollHeight(200 + 2 * BankSectionLayout.sectionHeight(1));
+		verify(compost).setOriginalY(20);
+		verify(preplantSeed).setOriginalY(BankSectionLayout.sectionHeight(2) + 20);
+		verify(container).setScrollHeight(200 + BankSectionLayout.sectionHeight(2) + BankSectionLayout.sectionHeight(1));
+	}
+
+	@Test
+	public void selectedCompostJoinsContractSectionOnlyWhenVisibleAndBanked() throws Exception
+	{
+		FarmingContractBankSeedPlugin plugin = new FarmingContractBankSeedPlugin();
+		Client client = mock(Client.class);
+		Player player = mock(Player.class);
+		when(client.getLocalPlayer()).thenReturn(player);
+		when(player.getWorldLocation()).thenReturn(new WorldPoint(1248, 3730, 0));
+		Widget container = mock(Widget.class);
+		Widget seed = mock(Widget.class);
+		Widget compost = mock(Widget.class);
+		when(seed.getItemId()).thenReturn(ItemID.WATERMELON_SEED);
+		when(seed.getOriginalWidth()).thenReturn(36);
+		when(seed.getOriginalHeight()).thenReturn(32);
+		when(compost.getItemId()).thenReturn(ItemID.BUCKET_ULTRACOMPOST);
+		when(container.getChildren()).thenReturn(new Widget[]{seed, compost});
+		when(container.createChild(-1, WidgetType.GRAPHIC)).thenReturn(mock(Widget.class));
+		when(container.createChild(-1, WidgetType.TEXT)).thenReturn(mock(Widget.class));
+		when(client.getWidget(InterfaceID.Bankmain.ITEMS)).thenReturn(container);
+		ItemContainer bank = mock(ItemContainer.class);
+		when(client.getItemContainer(InventoryID.BANK)).thenReturn(bank);
+		when(bank.find(anyInt())).thenReturn(-1);
+		when(bank.find(ItemID.WATERMELON_SEED)).thenReturn(1);
+		when(bank.find(ItemID.BUCKET_ULTRACOMPOST)).thenReturn(2);
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.compost()).thenReturn(CompostChoice.ULTRACOMPOST);
+		FarmingContractManager contracts = mock(FarmingContractManager.class);
+		when(contracts.hasContract()).thenReturn(true);
+		when(contracts.getContract()).thenReturn(Produce.WATERMELON);
+		inject(plugin, "client", client);
+		inject(plugin, "config", config);
+		inject(plugin, "contractManager", contracts);
+		plugin.startUp();
+
+		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
+		show.setAccessible(true);
+		show.invoke(plugin);
+
+		verify(compost).setOriginalY(20);
+		verify(container).setScrollHeight(BankSectionLayout.sectionHeight(2));
+	}
+
+	@Test
+	public void filledBottomlessBucketJoinsPreplantSectionWithoutContract() throws Exception
+	{
+		FarmingContractBankSeedPlugin plugin = new FarmingContractBankSeedPlugin();
+		Client client = mock(Client.class);
+		Player player = mock(Player.class);
+		when(client.getLocalPlayer()).thenReturn(player);
+		when(player.getWorldLocation()).thenReturn(new WorldPoint(1248, 3730, 0));
+		Widget container = mock(Widget.class);
+		Widget seed = mock(Widget.class);
+		Widget bucket = mock(Widget.class);
+		when(seed.getItemId()).thenReturn(ItemID.ONION_SEED);
+		when(seed.getOriginalWidth()).thenReturn(36);
+		when(seed.getOriginalHeight()).thenReturn(32);
+		when(bucket.getItemId()).thenReturn(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
+		when(container.getChildren()).thenReturn(new Widget[]{seed, bucket});
+		when(container.createChild(-1, WidgetType.GRAPHIC)).thenReturn(mock(Widget.class));
+		when(container.createChild(-1, WidgetType.TEXT)).thenReturn(mock(Widget.class));
+		when(client.getWidget(InterfaceID.Bankmain.ITEMS)).thenReturn(container);
+		ItemContainer bank = mock(ItemContainer.class);
+		when(client.getItemContainer(InventoryID.BANK)).thenReturn(bank);
+		when(bank.find(anyInt())).thenReturn(-1);
+		when(bank.find(ItemID.ONION_SEED)).thenReturn(1);
+		when(bank.find(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED)).thenReturn(2);
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.northAllotment()).thenReturn(PreplantChoice.Allotment.ONION);
+		when(config.compost()).thenReturn(CompostChoice.BOTTOMLESS_COMPOST_BUCKET);
+		inject(plugin, "client", client);
+		inject(plugin, "config", config);
+		inject(plugin, "contractManager", mock(FarmingContractManager.class));
+		plugin.startUp();
+
+		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
+		show.setAccessible(true);
+		show.invoke(plugin);
+
+		verify(bucket).setOriginalY(20);
+		verify(container).setScrollHeight(BankSectionLayout.sectionHeight(2));
 	}
 
 	private static void inject(Object object, String fieldName, Object value) throws Exception

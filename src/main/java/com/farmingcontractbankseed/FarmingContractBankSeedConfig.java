@@ -38,4 +38,7 @@ public interface FarmingContractBankSeedConfig extends Config
 
 	@ConfigItem(keyName = "redwood", name = "Redwood", description = "Preplant a redwood tree", position = 10)
 	default PreplantChoice.Redwood redwood() { return PreplantChoice.Redwood.NONE; }
+
+	@ConfigItem(keyName = "compost", name = "Compost", description = "Compost item to show alongside contract or preplant seeds", position = 11)
+	default CompostChoice compost() { return CompostChoice.NONE; }
 }
