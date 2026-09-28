@@ -11,6 +11,7 @@ import net.runelite.api.Client;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.api.ScriptID;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.VarbitChanged;
@@ -26,6 +27,7 @@ import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
 import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
+import net.runelite.client.ui.overlay.OverlayManager;
 
 @PluginDescriptor(
 	name = "Farming Contract Bank Seed",
@@ -53,6 +55,15 @@ public class FarmingContractBankSeedPlugin extends Plugin
 	@Inject
 	private FarmingContractBankSeedConfig config;
 
+	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
+	private PreplantPatchOverlay patchOverlay;
+
+	@Inject
+	private PreplantInventoryOverlay inventoryOverlay;
+
 	@Provides
 	FarmingContractBankSeedConfig provideConfig(ConfigManager configManager)
 	{
@@ -70,13 +81,24 @@ public class FarmingContractBankSeedPlugin extends Plugin
 	protected void startUp()
 	{
 		running = true;
+		overlayManager.add(patchOverlay);
+		overlayManager.add(inventoryOverlay);
 	}
 
 	@Override
 	protected void shutDown()
 	{
 		running = false;
+		overlayManager.remove(patchOverlay);
+		overlayManager.remove(inventoryOverlay);
+		patchOverlay.clear();
 		restoreLayout();
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		patchOverlay.refresh();
 	}
 
 	@Subscribe
@@ -121,6 +143,7 @@ public class FarmingContractBankSeedPlugin extends Plugin
 	{
 		if (FarmingContractBankSeedConfig.GROUP.equals(event.getGroup()))
 		{
+			patchOverlay.clear();
 			clientThread.invokeAtTickEnd(this::showBankSections);
 		}
 	}
@@ -226,7 +249,7 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		}
 	}
 
-	private boolean isInFarmingGuild()
+	boolean isInFarmingGuild()
 	{
 		Player player = client.getLocalPlayer();
 		return player != null && FARMING_GUILD_REGIONS.contains(player.getWorldLocation().getRegionID());

@@ -8,7 +8,11 @@ Configure a crop for each contract-eligible Farming Guild patch (including separ
 
 Optionally choose compost, supercompost, ultracompost, or a bottomless compost bucket (filled or empty). The default is None. When banked and visible in the current bank tab, compost joins the contract section while contract seeds or saplings are shown; otherwise it appears in the preplant section, even after the seeds and saplings have been withdrawn. It is shown only when a contract needs planting or a configured preplant patch is ready.
 
-This only changes how items are displayed in the bank; it does not move them between slots.
+**Highlight preplant patches** outlines ready Farming Guild patches and their configured seeds and saplings in the inventory. Each patch has its own colour (for example, bush is orange), shared by its seed or sapling. If both allotments need the same seed, its outline is split between their two colours. Highlights appear only in the Farming Guild for patches that are unplanted, dead, or have had their health checked; they do not require an active contract or banked seeds. The option is on by default.
+
+**Highlight contract patch** similarly outlines ready patches for an active contract and its seed or sapling in the inventory in cyan. Both allotments are highlighted if both are ready. The contract colour takes precedence over a preplant colour on the same patch. It appears only while the contract still needs planting and is on by default; it can be toggled independently of preplant highlights.
+
+Bank sections only change how items are displayed; they do not move them between slots.
 
 ## License
 

@@ -41,4 +41,11 @@ public interface FarmingContractBankSeedConfig extends Config
 
 	@ConfigItem(keyName = "compost", name = "Compost", description = "Compost item to show alongside contract or preplant seeds", position = 11)
 	default CompostChoice compost() { return CompostChoice.NONE; }
+
+	@ConfigItem(keyName = "highlightPreplantPatches", name = "Highlight preplant patches", description = "Outline ready Farming Guild patches and their preplant seeds in your inventory", position = 12)
+	default boolean highlightPreplantPatches() { return true; }
+
+	@ConfigItem(keyName = "highlightContractPatch", name = "Highlight contract patch", description = "Outline the ready contract patch and its seed or sapling in your inventory", position = 13)
+	default boolean highlightContractPatch() { return true; }
+
 }

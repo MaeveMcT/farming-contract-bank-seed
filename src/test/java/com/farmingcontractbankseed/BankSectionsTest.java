@@ -15,6 +15,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.plugins.timetracking.farming.Produce;
 import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
+import net.runelite.client.ui.overlay.OverlayManager;
 import org.junit.Test;
 
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -72,7 +73,7 @@ public class BankSectionsTest
 		inject(plugin, "client", client);
 		inject(plugin, "config", config);
 		inject(plugin, "contractManager", mock(FarmingContractManager.class));
-		plugin.startUp();
+		start(plugin);
 
 		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
 		show.setAccessible(true);
@@ -122,7 +123,7 @@ public class BankSectionsTest
 		inject(plugin, "client", client);
 		inject(plugin, "config", config);
 		inject(plugin, "contractManager", contracts);
-		plugin.startUp();
+		start(plugin);
 
 		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
 		show.setAccessible(true);
@@ -166,7 +167,7 @@ public class BankSectionsTest
 		inject(plugin, "client", client);
 		inject(plugin, "config", config);
 		inject(plugin, "contractManager", contracts);
-		plugin.startUp();
+		start(plugin);
 
 		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
 		show.setAccessible(true);
@@ -206,7 +207,7 @@ public class BankSectionsTest
 		inject(plugin, "client", client);
 		inject(plugin, "config", config);
 		inject(plugin, "contractManager", mock(FarmingContractManager.class));
-		plugin.startUp();
+		start(plugin);
 
 		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
 		show.setAccessible(true);
@@ -248,7 +249,7 @@ public class BankSectionsTest
 		inject(plugin, "client", client);
 		inject(plugin, "config", config);
 		inject(plugin, "contractManager", contracts);
-		plugin.startUp();
+		start(plugin);
 
 		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
 		show.setAccessible(true);
@@ -262,6 +263,14 @@ public class BankSectionsTest
 		show.invoke(plugin);
 		verify(title, times(1)).setText("Preplant seeds/saplings");
 		verify(container, times(1)).createChild(-1, WidgetType.TEXT);
+	}
+
+	private static void start(FarmingContractBankSeedPlugin plugin) throws Exception
+	{
+		inject(plugin, "overlayManager", mock(OverlayManager.class));
+		inject(plugin, "patchOverlay", mock(PreplantPatchOverlay.class));
+		inject(plugin, "inventoryOverlay", mock(PreplantInventoryOverlay.class));
+		plugin.startUp();
 	}
 
 	private static void inject(Object object, String fieldName, Object value) throws Exception

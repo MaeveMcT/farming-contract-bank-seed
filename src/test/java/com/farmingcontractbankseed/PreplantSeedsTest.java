@@ -1,7 +1,10 @@
 package com.farmingcontractbankseed;
 
+import java.awt.Color;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.plugins.timetracking.farming.PatchImplementation;
@@ -136,6 +139,53 @@ public class PreplantSeedsTest
 		assertTrue(PreplantSeeds.itemIds(config, id -> id == VarbitID.FARMING_TRANSMIT_K ? 34 : 0).isEmpty());
 		assertEquals(Arrays.asList(ItemID.APPLE_TREE_SEED, ItemID.PLANTPOT_APPLE_SAPLING),
 			PreplantSeeds.itemIds(config, id -> id == VarbitID.FARMING_TRANSMIT_K ? 14 : 0));
+	}
+
+	@Test
+	public void eachPatchHasADistinctColourSharedWithItsSeeds()
+	{
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.northAllotment()).thenReturn(PreplantChoice.Allotment.WATERMELON);
+		when(config.southAllotment()).thenReturn(PreplantChoice.Allotment.WATERMELON);
+		when(config.flower()).thenReturn(PreplantChoice.Flower.WHITE_LILY);
+		when(config.herb()).thenReturn(PreplantChoice.Herb.RANARR);
+		when(config.bush()).thenReturn(PreplantChoice.Bush.POISON_IVY);
+		when(config.cactus()).thenReturn(PreplantChoice.Cactus.POTATO_CACTUS);
+		when(config.tree()).thenReturn(PreplantChoice.Tree.OAK);
+		when(config.fruitTree()).thenReturn(PreplantChoice.FruitTree.APPLE);
+		when(config.celastrus()).thenReturn(PreplantChoice.Celastrus.CELASTRUS);
+		when(config.redwood()).thenReturn(PreplantChoice.Redwood.REDWOOD);
+
+		List<PreplantSeeds.Patch> patches = PreplantSeeds.readyPatches(config, id -> 0);
+		Set<Color> colors = new HashSet<>();
+		for (PreplantSeeds.Patch patch : patches)
+		{
+			assertTrue(colors.add(patch.color));
+			assertEquals(PreplantSeeds.colorFor(patch.varbit), patch.color);
+		}
+		assertEquals(10, colors.size());
+		assertEquals(new Color(0xFF9800), PreplantSeeds.colorFor(VarbitID.FARMING_TRANSMIT_B));
+		assertEquals(patches.get(0).seedId, patches.get(1).seedId);
+		assertNotEquals(patches.get(0).color, patches.get(1).color);
+	}
+
+	@Test
+	public void readyPatchesKeepTheirOwnVarbitsAndMatchOnlyTheirSeeds()
+	{
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.northAllotment()).thenReturn(PreplantChoice.Allotment.WATERMELON);
+		when(config.southAllotment()).thenReturn(PreplantChoice.Allotment.WATERMELON);
+		when(config.fruitTree()).thenReturn(PreplantChoice.FruitTree.APPLE);
+
+		List<PreplantSeeds.Patch> patches = PreplantSeeds.readyPatches(config,
+			id -> id == VarbitID.FARMING_TRANSMIT_D ? 52 : 0);
+		assertEquals(2, patches.size());
+		assertEquals(VarbitID.FARMING_TRANSMIT_C, patches.get(0).varbit);
+		assertTrue(patches.get(0).matches(ItemID.WATERMELON_SEED));
+		assertFalse(patches.get(0).matches(ItemID.ONION_SEED));
+		assertEquals(VarbitID.FARMING_TRANSMIT_K, patches.get(1).varbit);
+		assertTrue(patches.get(1).matches(ItemID.PLANTPOT_APPLE_SAPLING));
+		assertTrue(patches.get(1).matches(ItemID.APPLE_TREE_SEED));
 	}
 
 	@Test
