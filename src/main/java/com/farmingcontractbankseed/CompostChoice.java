@@ -2,7 +2,7 @@ package com.farmingcontractbankseed;
 
 import net.runelite.api.gameval.ItemID;
 
-enum CompostChoice
+public enum CompostChoice
 {
 	NONE(),
 	COMPOST(ItemID.BUCKET_COMPOST),

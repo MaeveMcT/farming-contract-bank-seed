@@ -153,8 +153,9 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		}
 
 		List<Integer> contractIds = new ArrayList<>(2);
-		if (contractManager.hasContract()
-			&& ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState()))
+		boolean hasContractToPlant = contractManager.hasContract()
+			&& ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState());
+		if (hasContractToPlant)
 		{
 			int produceItemId = contractManager.getContract().getItemID();
 			addIfBanked(contractIds, bank, ContractSeedCatalog.seedForProduce(produceItemId));
@@ -163,10 +164,11 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		List<Widget> contractWidgets = ContractSectionWidgets.findExisting(originalChildren, contractIds);
 
 		List<Integer> preplantIds = PreplantSeeds.itemIds(config, client::getVarbitValue);
+		boolean hasReadyPreplant = !preplantIds.isEmpty();
 		preplantIds.removeAll(contractIds); // The contract section owns shared seeds and saplings.
 		preplantIds.removeIf(id -> bank.find(id) < 0);
 		List<Widget> preplantWidgets = ContractSectionWidgets.findExisting(originalChildren, preplantIds);
-		if (!contractWidgets.isEmpty() || !preplantWidgets.isEmpty())
+		if (hasContractToPlant || hasReadyPreplant)
 		{
 			for (int compostId : config.compost().itemIds())
 			{

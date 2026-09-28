@@ -6,7 +6,7 @@ The section is hidden while the contract crop is growing, fully grown, or diseas
 
 Configure a crop for each contract-eligible Farming Guild patch (including separate north and south allotments) to add a **Preplant seeds/saplings** section below the contract section. Each dropdown is limited to crops supported by Farming Guild contracts and defaults to None. Preplant seeds/saplings appear only while their corresponding patch is unplanted, dead, or has already had its health checked, and only when the item is banked and visible in the current bank tab; duplicates already in the contract section appear there only. The preplant section also works without an active contract. Spirit tree, anima, and Hespori patches are not included.
 
-Optionally choose compost, supercompost, ultracompost, or a bottomless compost bucket (filled or empty) to display alongside visible, banked contract seeds, or preplant seeds when there is no contract seed section. The default is None. Compost is shown only when one of those seed sections is present and the chosen item is visible in the current bank tab.
+Optionally choose compost, supercompost, ultracompost, or a bottomless compost bucket (filled or empty). The default is None. When banked and visible in the current bank tab, compost joins the contract section while contract seeds or saplings are shown; otherwise it appears in the preplant section, even after the seeds and saplings have been withdrawn. It is shown only when a contract needs planting or a configured preplant patch is ready.
 
 This only changes how items are displayed in the bank; it does not move them between slots.
 

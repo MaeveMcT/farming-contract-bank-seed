@@ -2,6 +2,8 @@ package com.farmingcontractbankseed;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.runelite.api.Client;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
@@ -19,11 +21,23 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class BankSectionsTest
 {
+	@Test
+	public void compostChoiceIsAccessibleThroughConfigProxy()
+	{
+		FarmingContractBankSeedConfig config = (FarmingContractBankSeedConfig) Proxy.newProxyInstance(
+			FarmingContractBankSeedConfig.class.getClassLoader(),
+			new Class<?>[]{FarmingContractBankSeedConfig.class},
+			(proxy, method, args) -> CompostChoice.NONE);
+
+		org.junit.Assert.assertEquals(CompostChoice.NONE, config.compost());
+	}
+
 	@Test
 	public void preplantSectionAppearsWithoutActiveContractAndMovesOnlyVisibleBankedSeed() throws Exception
 	{
@@ -200,6 +214,54 @@ public class BankSectionsTest
 
 		verify(bucket).setOriginalY(20);
 		verify(container).setScrollHeight(BankSectionLayout.sectionHeight(2));
+	}
+
+	@Test
+	public void compostKeepsPreplantSectionAfterContractAndPreplantSeedsAreWithdrawn() throws Exception
+	{
+		FarmingContractBankSeedPlugin plugin = new FarmingContractBankSeedPlugin();
+		Client client = mock(Client.class);
+		Player player = mock(Player.class);
+		when(client.getLocalPlayer()).thenReturn(player);
+		when(player.getWorldLocation()).thenReturn(new WorldPoint(1248, 3730, 0));
+		Widget container = mock(Widget.class);
+		Widget compost = mock(Widget.class);
+		when(compost.getItemId()).thenReturn(ItemID.BUCKET_SUPERCOMPOST);
+		when(compost.getOriginalWidth()).thenReturn(36);
+		when(compost.getOriginalHeight()).thenReturn(32);
+		when(container.getChildren()).thenReturn(new Widget[]{compost});
+		Widget title = mock(Widget.class);
+		when(container.createChild(-1, WidgetType.GRAPHIC)).thenReturn(mock(Widget.class));
+		when(container.createChild(-1, WidgetType.TEXT)).thenReturn(title);
+		when(client.getWidget(InterfaceID.Bankmain.ITEMS)).thenReturn(container);
+		ItemContainer bank = mock(ItemContainer.class);
+		when(client.getItemContainer(InventoryID.BANK)).thenReturn(bank);
+		when(bank.find(anyInt())).thenReturn(-1);
+		AtomicBoolean compostBanked = new AtomicBoolean(true);
+		when(bank.find(ItemID.BUCKET_SUPERCOMPOST)).thenAnswer(invocation -> compostBanked.get() ? 2 : -1);
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.northAllotment()).thenReturn(PreplantChoice.Allotment.ONION);
+		when(config.compost()).thenReturn(CompostChoice.SUPERCOMPOST);
+		FarmingContractManager contracts = mock(FarmingContractManager.class);
+		when(contracts.hasContract()).thenReturn(true);
+		when(contracts.getContract()).thenReturn(Produce.WATERMELON);
+		inject(plugin, "client", client);
+		inject(plugin, "config", config);
+		inject(plugin, "contractManager", contracts);
+		plugin.startUp();
+
+		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
+		show.setAccessible(true);
+		show.invoke(plugin);
+
+		verify(title).setText("Preplant seeds/saplings");
+		verify(compost).setOriginalY(20);
+		verify(container).setScrollHeight(BankSectionLayout.sectionHeight(1));
+
+		compostBanked.set(false);
+		show.invoke(plugin);
+		verify(title, times(1)).setText("Preplant seeds/saplings");
+		verify(container, times(1)).createChild(-1, WidgetType.TEXT);
 	}
 
 	private static void inject(Object object, String fieldName, Object value) throws Exception
