@@ -54,7 +54,7 @@ final class PreplantSeeds
 		int varbit, IntUnaryOperator varbits)
 	{
 		Produce crop = choice.produce();
-		if (crop == null || !type.isEmptyOrDead(varbits.applyAsInt(varbit)))
+		if (crop == null || !type.isReadyToPreplant(varbits.applyAsInt(varbit)))
 		{
 			return;
 		}

@@ -3,7 +3,7 @@ package com.farmingcontractbankseed;
 /**
  * Farming Guild patch states as decoded by RuneLite's PatchImplementation.
  * Its per-patch prediction API is package-private; these are the WEEDS (unplanted)
- * and DEAD varbit ranges for the contract-eligible patch types. Update these
+ * DEAD and post-check-health (HARVESTABLE) varbit ranges for contract-eligible patches. Update these
  * ranges if RuneLite changes its farming state decoding.
  */
 final class GuildPatchState
@@ -26,37 +26,51 @@ final class GuildPatchState
 		BUSH(
 			new int[]{0, 4, 64, 69, 75, 79, 86, 90, 98, 102, 111, 115, 124, 133,
 				139, 143, 150, 154, 162, 166, 175, 179, 188, 196, 226, 249},
-			new int[]{134, 138, 144, 149, 155, 161, 167, 174, 180, 187, 217, 224}),
+			new int[]{134, 138, 144, 149, 155, 161, 167, 174, 180, 187, 217, 224},
+			new int[]{10, 14, 21, 25, 33, 37, 46, 50, 59, 63, 205, 209}),
 		TREE(
 			new int[]{0, 7, 63, 72, 78, 79, 87, 88, 98, 99, 111, 112, 126, 136,
 				142, 143, 151, 152, 162, 163, 175, 176, 190, 191, 198, 255},
 			new int[]{137, 139, 141, 141, 144, 148, 150, 150, 153, 159, 161, 161,
-				164, 172, 174, 174, 177, 187, 189, 189}),
+				164, 172, 174, 174, 177, 187, 189, 189},
+			new int[]{13, 14, 22, 23, 33, 34, 46, 47, 61, 62, 192, 197}),
 		FRUIT_TREE(
 			new int[]{0, 7, 62, 71, 126, 135, 190, 199, 254, 255},
-			new int[]{27, 32, 54, 59, 91, 96, 118, 123, 155, 160, 182, 187, 219, 224, 246, 251}),
+			new int[]{27, 32, 54, 59, 91, 96, 118, 123, 155, 160, 182, 187, 219, 224, 246, 251},
+			new int[]{14, 20, 33, 33, 41, 47, 60, 60, 78, 84, 97, 97, 105, 111, 124, 124,
+				142, 148, 161, 161, 169, 175, 188, 188, 206, 212, 225, 225, 233, 239, 252, 252}),
 		CACTUS(
 			new int[]{0, 7, 59, 255},
-			new int[]{25, 30, 52, 57}),
+			new int[]{25, 30, 52, 57},
+			new int[]{15, 18, 39, 45}),
 		CELASTRUS(
 			new int[]{0, 7, 29, 255},
-			new int[]{23, 27}),
+			new int[]{23, 27},
+			new int[]{14, 17, 28, 28}),
 		REDWOOD(
 			new int[]{0, 7},
-			new int[]{28, 36});
+			new int[]{28, 36},
+			new int[]{18, 18, 41, 55});
 
 		private final int[] empty;
 		private final int[] dead;
+		private final int[] checked;
 
 		Type(int[] empty, int[] dead)
 		{
-			this.empty = empty;
-			this.dead = dead;
+			this(empty, dead, new int[0]);
 		}
 
-		boolean isEmptyOrDead(int value)
+		Type(int[] empty, int[] dead, int[] checked)
 		{
-			return inRanges(value, empty) || inRanges(value, dead);
+			this.empty = empty;
+			this.dead = dead;
+			this.checked = checked;
+		}
+
+		boolean isReadyToPreplant(int value)
+		{
+			return inRanges(value, empty) || inRanges(value, dead) || inRanges(value, checked);
 		}
 	}
 

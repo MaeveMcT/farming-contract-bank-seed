@@ -54,10 +54,10 @@ public class PreplantSeedsTest
 
 	private static void checkStates(GuildPatchState.Type type, int dead, int growing)
 	{
-		assertTrue(type.isEmptyOrDead(0));
-		assertTrue(type.isEmptyOrDead(dead));
-		assertFalse(type.isEmptyOrDead(growing));
-		assertFalse(type.isEmptyOrDead(-1));
+		assertTrue(type.isReadyToPreplant(0));
+		assertTrue(type.isReadyToPreplant(dead));
+		assertFalse(type.isReadyToPreplant(growing));
+		assertFalse(type.isReadyToPreplant(-1));
 	}
 
 	private static void check(PreplantChoice[] choices, PatchImplementation type)
@@ -76,6 +76,31 @@ public class PreplantSeedsTest
 	{
 		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
 		assertTrue(PreplantSeeds.itemIds(config, id -> 0).isEmpty());
+	}
+
+	@Test
+	public void checkedHealthPatchesCanBePreplantedButUncheckedOnesCannot()
+	{
+		assertTrue(GuildPatchState.Type.BUSH.isReadyToPreplant(10));
+		assertTrue(GuildPatchState.Type.BUSH.isReadyToPreplant(205));
+		assertFalse(GuildPatchState.Type.BUSH.isReadyToPreplant(250));
+		assertTrue(GuildPatchState.Type.TREE.isReadyToPreplant(13));
+		assertTrue(GuildPatchState.Type.TREE.isReadyToPreplant(192));
+		assertFalse(GuildPatchState.Type.TREE.isReadyToPreplant(12));
+		assertTrue(GuildPatchState.Type.FRUIT_TREE.isReadyToPreplant(14));
+		assertTrue(GuildPatchState.Type.FRUIT_TREE.isReadyToPreplant(252));
+		assertFalse(GuildPatchState.Type.FRUIT_TREE.isReadyToPreplant(34));
+		assertTrue(GuildPatchState.Type.CACTUS.isReadyToPreplant(15));
+		assertTrue(GuildPatchState.Type.CACTUS.isReadyToPreplant(39));
+		assertFalse(GuildPatchState.Type.CACTUS.isReadyToPreplant(31));
+		assertTrue(GuildPatchState.Type.CELASTRUS.isReadyToPreplant(14));
+		assertTrue(GuildPatchState.Type.CELASTRUS.isReadyToPreplant(28));
+		assertFalse(GuildPatchState.Type.CELASTRUS.isReadyToPreplant(13));
+		assertTrue(GuildPatchState.Type.REDWOOD.isReadyToPreplant(18));
+		assertTrue(GuildPatchState.Type.REDWOOD.isReadyToPreplant(55));
+		assertFalse(GuildPatchState.Type.REDWOOD.isReadyToPreplant(37));
+		assertFalse(GuildPatchState.Type.ALLOTMENT.isReadyToPreplant(10));
+		assertFalse(GuildPatchState.Type.HERB.isReadyToPreplant(8));
 	}
 
 	@Test
@@ -100,6 +125,17 @@ public class PreplantSeedsTest
 		assertEquals(Arrays.asList(ItemID.WATERMELON_SEED), PreplantSeeds.itemIds(config,
 			id -> id == VarbitID.FARMING_TRANSMIT_D ? 52 : 0));
 		assertTrue(PreplantSeeds.itemIds(config, id -> 52).isEmpty());
+	}
+
+	@Test
+	public void checkedFruitTreeShowsBothSeedAndSapling()
+	{
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.fruitTree()).thenReturn(PreplantChoice.FruitTree.APPLE);
+
+		assertTrue(PreplantSeeds.itemIds(config, id -> id == VarbitID.FARMING_TRANSMIT_K ? 34 : 0).isEmpty());
+		assertEquals(Arrays.asList(ItemID.APPLE_TREE_SEED, ItemID.PLANTPOT_APPLE_SAPLING),
+			PreplantSeeds.itemIds(config, id -> id == VarbitID.FARMING_TRANSMIT_K ? 14 : 0));
 	}
 
 	@Test
