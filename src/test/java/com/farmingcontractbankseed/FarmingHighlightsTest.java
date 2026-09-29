@@ -18,28 +18,29 @@ import static org.mockito.Mockito.when;
 public class FarmingHighlightsTest
 {
 	@Test
-	public void contractAllotmentsHighlightOnlyReadyPatchesAndTheirSeed()
+	public void contractAllotmentsHighlightBothPatchesAndTheirSeedEvenWhenOccupied()
 	{
-		List<PreplantSeeds.Patch> patches = FarmingHighlights.contractPatches(Produce.WATERMELON, true,
-			id -> id == VarbitID.FARMING_TRANSMIT_D ? 52 : 0);
-		assertEquals(1, patches.size());
+		List<PreplantSeeds.Patch> patches = FarmingHighlights.contractPatches(Produce.WATERMELON, true);
+		assertEquals(2, patches.size());
 		assertEquals(VarbitID.FARMING_TRANSMIT_C, patches.get(0).varbit);
 		assertEquals(FarmingHighlights.CONTRACT_COLOR, patches.get(0).color);
 		assertTrue(patches.get(0).matches(ItemID.WATERMELON_SEED));
 		assertFalse(patches.get(0).matches(ItemID.ONION_SEED));
-		assertEquals(2, FarmingHighlights.contractPatches(Produce.WATERMELON, true, id -> 0).size());
-		assertTrue(FarmingHighlights.contractPatches(Produce.WATERMELON, false, id -> 0).isEmpty());
+		assertEquals(VarbitID.FARMING_TRANSMIT_D, patches.get(1).varbit);
+		assertEquals(FarmingHighlights.CONTRACT_COLOR, patches.get(1).color);
+		assertEquals(2, FarmingHighlights.contractPatches(Produce.WATERMELON, true).size());
+		assertTrue(FarmingHighlights.contractPatches(Produce.WATERMELON, false).isEmpty());
 	}
 
 	@Test
-	public void contractTreeHighlightsItsSeedAndSaplingOnlyWhileReady()
+	public void contractTreeHighlightsItsSeedAndSaplingEvenWhenOccupied()
 	{
-		List<PreplantSeeds.Patch> patches = FarmingHighlights.contractPatches(Produce.APPLE, true, id -> 14);
+		List<PreplantSeeds.Patch> patches = FarmingHighlights.contractPatches(Produce.APPLE, true);
 		assertEquals(1, patches.size());
 		assertEquals(VarbitID.FARMING_TRANSMIT_K, patches.get(0).varbit);
 		assertTrue(patches.get(0).matches(ItemID.APPLE_TREE_SEED));
 		assertTrue(patches.get(0).matches(ItemID.PLANTPOT_APPLE_SAPLING));
-		assertTrue(FarmingHighlights.contractPatches(Produce.APPLE, true, id -> 34).isEmpty());
+		assertTrue(FarmingHighlights.contractPatches(Produce.APPLE, false).isEmpty());
 	}
 
 	@Test
@@ -64,12 +65,34 @@ public class FarmingHighlightsTest
 		assertEquals(PreplantSeeds.colorFor(VarbitID.FARMING_TRANSMIT_C), patches.get(1).color);
 
 		when(manager.getContractCropState()).thenReturn(CropState.GROWING);
-		assertEquals(2, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
+		assertEquals(3, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
 		when(config.highlightPreplantPatches()).thenReturn(false);
-		assertTrue(FarmingHighlights.readyPatches(config, manager, id -> 0).isEmpty());
+		assertEquals(1, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
 		when(manager.getContractCropState()).thenReturn(null);
 		assertEquals(1, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
 		when(config.highlightContractPatch()).thenReturn(false);
 		assertTrue(FarmingHighlights.readyPatches(config, manager, id -> 0).isEmpty());
+	}
+
+	@Test
+	public void fullyGrownOtherHerbDoesNotBlockContractAndOverridesPreplant()
+	{
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.herb()).thenReturn(PreplantChoice.Herb.IRIT);
+		FarmingContractManager manager = mock(FarmingContractManager.class);
+		when(manager.hasContract()).thenReturn(true);
+		when(manager.getContract()).thenReturn(Produce.KWUARM);
+		// RuneLite reports null for the contract crop state when a different herb occupies the patch.
+		List<PreplantSeeds.Patch> patches = FarmingHighlights.readyPatches(config, manager,
+			id -> id == VarbitID.FARMING_TRANSMIT_E ? 8 : 0);
+		assertEquals(1, patches.size());
+		assertEquals(VarbitID.FARMING_TRANSMIT_E, patches.get(0).varbit);
+		assertEquals(FarmingHighlights.CONTRACT_COLOR, patches.get(0).color);
+		assertTrue(patches.get(0).matches(ItemID.KWUARM_SEED));
+		assertFalse(patches.get(0).matches(ItemID.IRIT_SEED));
+
+		when(manager.getContractCropState()).thenReturn(CropState.HARVESTABLE);
+		assertTrue(FarmingHighlights.readyPatches(config, manager,
+			id -> id == VarbitID.FARMING_TRANSMIT_E ? 8 : 0).isEmpty());
 	}
 }

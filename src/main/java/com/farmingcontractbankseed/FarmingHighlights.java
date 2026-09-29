@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntUnaryOperator;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.client.plugins.timetracking.farming.CropState;
 import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
 import net.runelite.client.plugins.timetracking.farming.PatchImplementation;
 import net.runelite.client.plugins.timetracking.farming.Produce;
@@ -26,7 +27,7 @@ final class FarmingHighlights
 		if (config.highlightContractPatch() && contractManager != null && contractManager.hasContract())
 		{
 			patches.addAll(contractPatches(contractManager.getContract(),
-				ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState()), varbits));
+				contractManager.getContractCropState() != CropState.HARVESTABLE));
 		}
 		if (config.highlightPreplantPatches())
 		{
@@ -47,10 +48,10 @@ final class FarmingHighlights
 		return patches;
 	}
 
-	static List<PreplantSeeds.Patch> contractPatches(Produce contract, boolean needsPlanting, IntUnaryOperator varbits)
+	static List<PreplantSeeds.Patch> contractPatches(Produce contract, boolean shouldHighlight)
 	{
 		List<PreplantSeeds.Patch> patches = new ArrayList<>();
-		if (contract == null || !needsPlanting)
+		if (contract == null || !shouldHighlight)
 		{
 			return patches;
 		}
@@ -65,50 +66,46 @@ final class FarmingHighlights
 		PatchImplementation type = contract.getPatchImplementation();
 		if (type == PatchImplementation.ALLOTMENT)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_C, GuildPatchState.Type.ALLOTMENT, seedId, saplingId, varbits);
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_D, GuildPatchState.Type.ALLOTMENT, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_C, seedId, saplingId);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_D, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.FLOWER)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_H, GuildPatchState.Type.FLOWER, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_H, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.HERB)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_E, GuildPatchState.Type.HERB, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_E, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.BUSH)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_B, GuildPatchState.Type.BUSH, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_B, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.CACTUS)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_F, GuildPatchState.Type.CACTUS, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_F, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.TREE)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_G, GuildPatchState.Type.TREE, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_G, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.FRUIT_TREE)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_K, GuildPatchState.Type.FRUIT_TREE, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_K, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.CELASTRUS)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_L, GuildPatchState.Type.CELASTRUS, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_L, seedId, saplingId);
 		}
 		else if (type == PatchImplementation.REDWOOD)
 		{
-			addIfReady(patches, VarbitID.FARMING_TRANSMIT_I, GuildPatchState.Type.REDWOOD, seedId, saplingId, varbits);
+			addPatch(patches, VarbitID.FARMING_TRANSMIT_I, seedId, saplingId);
 		}
 		return patches;
 	}
 
-	private static void addIfReady(List<PreplantSeeds.Patch> patches, int varbit, GuildPatchState.Type type,
-		int seedId, int saplingId, IntUnaryOperator varbits)
+	private static void addPatch(List<PreplantSeeds.Patch> patches, int varbit, int seedId, int saplingId)
 	{
-		if (type.isReadyToPreplant(varbits.applyAsInt(varbit)))
-		{
-			patches.add(new PreplantSeeds.Patch(varbit, CONTRACT_COLOR, seedId, saplingId));
-		}
+		patches.add(new PreplantSeeds.Patch(varbit, CONTRACT_COLOR, seedId, saplingId));
 	}
 }

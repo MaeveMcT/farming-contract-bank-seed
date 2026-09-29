@@ -10,7 +10,7 @@ Optionally choose compost, supercompost, ultracompost, or a bottomless compost b
 
 **Highlight preplant patches** outlines ready Farming Guild patches and their configured seeds and saplings in the inventory. Each patch has its own colour (for example, bush is orange), shared by its seed or sapling. If both allotments need the same seed, its outline is split between their two colours. Highlights appear only in the Farming Guild for patches that are unplanted, dead, or have had their health checked; they do not require an active contract or banked seeds. The option is on by default.
 
-**Highlight contract patch** similarly outlines ready patches for an active contract and its seed or sapling in the inventory in cyan. Both allotments are highlighted if both are ready. The contract colour takes precedence over a preplant colour on the same patch. It appears only while the contract still needs planting and is on by default; it can be toggled independently of preplant highlights.
+**Highlight contract patch** outlines the active contract patch and its seed or sapling in the inventory in cyan, even if a different crop is planted there. Both allotments are highlighted for an allotment contract. The contract colour takes precedence over a preplant colour on the same patch. Highlights are hidden when the contract crop is fully grown; this option is on by default and can be toggled independently of preplant highlights. Bank section behavior is unchanged.
 
 Bank sections only change how items are displayed; they do not move them between slots.
 
