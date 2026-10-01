@@ -65,13 +65,40 @@ public class FarmingHighlightsTest
 		assertEquals(PreplantSeeds.colorFor(VarbitID.FARMING_TRANSMIT_C), patches.get(1).color);
 
 		when(manager.getContractCropState()).thenReturn(CropState.GROWING);
-		assertEquals(3, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
+		assertEquals(2, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
 		when(config.highlightPreplantPatches()).thenReturn(false);
-		assertEquals(1, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
+		assertTrue(FarmingHighlights.readyPatches(config, manager, id -> 0).isEmpty());
 		when(manager.getContractCropState()).thenReturn(null);
 		assertEquals(1, FarmingHighlights.readyPatches(config, manager, id -> 0).size());
 		when(config.highlightContractPatch()).thenReturn(false);
 		assertTrue(FarmingHighlights.readyPatches(config, manager, id -> 0).isEmpty());
+	}
+
+	@Test
+	public void plantingNewHerbContractStopsHighlightingItsPatchAndSeed()
+	{
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.herb()).thenReturn(PreplantChoice.Herb.IRIT);
+		FarmingContractManager manager = mock(FarmingContractManager.class);
+		int herbVarbit = VarbitID.FARMING_TRANSMIT_E;
+
+		// After harvesting the previous herb, the empty patch shows the preplant colour.
+		List<PreplantSeeds.Patch> patches = FarmingHighlights.readyPatches(config, manager, id -> 0);
+		assertEquals(1, patches.size());
+		assertEquals(PreplantSeeds.colorFor(herbVarbit), patches.get(0).color);
+
+		when(manager.hasContract()).thenReturn(true);
+		when(manager.getContract()).thenReturn(Produce.KWUARM);
+		patches = FarmingHighlights.readyPatches(config, manager, id -> 0);
+		assertEquals(1, patches.size());
+		assertEquals(FarmingHighlights.CONTRACT_COLOR, patches.get(0).color);
+		assertTrue(patches.get(0).matches(ItemID.KWUARM_SEED));
+
+		// Planting occupies the patch and RuneLite reports the contract crop as growing.
+		when(manager.getContractCropState()).thenReturn(CropState.GROWING);
+		patches = FarmingHighlights.readyPatches(config, manager,
+			id -> id == herbVarbit ? 8 : 0);
+		assertTrue("Planted contract herb must not highlight its patch or seed", patches.isEmpty());
 	}
 
 	@Test

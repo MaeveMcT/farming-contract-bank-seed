@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntUnaryOperator;
 import net.runelite.api.gameval.VarbitID;
-import net.runelite.client.plugins.timetracking.farming.CropState;
 import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
 import net.runelite.client.plugins.timetracking.farming.PatchImplementation;
 import net.runelite.client.plugins.timetracking.farming.Produce;
@@ -27,7 +26,7 @@ final class FarmingHighlights
 		if (config.highlightContractPatch() && contractManager != null && contractManager.hasContract())
 		{
 			patches.addAll(contractPatches(contractManager.getContract(),
-				contractManager.getContractCropState() != CropState.HARVESTABLE));
+				ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState())));
 		}
 		if (config.highlightPreplantPatches())
 		{
