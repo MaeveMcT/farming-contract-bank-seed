@@ -183,22 +183,26 @@ public class FarmingContractBankSeedPlugin extends Plugin
 			return;
 		}
 
+		// Capture original children before creating display-only missing-item widgets.
+		modifiedContainer = itemContainer;
+		originalChildrenCount = originalChildren.length;
+		originalScrollHeight = itemContainer.getScrollHeight();
+
 		List<Integer> contractIds = new ArrayList<>(2);
 		boolean hasContractToPlant = contractManager != null && contractManager.hasContract()
 			&& ContractStatePolicy.shouldPrioritizeSeed(contractManager.getContractCropState());
 		if (hasContractToPlant)
 		{
 			int produceItemId = contractManager.getContract().getItemID();
-			addIfBanked(contractIds, bank, ContractSeedCatalog.seedForProduce(produceItemId));
-			addIfBanked(contractIds, bank, ContractSeedCatalog.saplingForProduce(produceItemId));
+			addIfValid(contractIds, ContractSeedCatalog.seedForProduce(produceItemId));
+			addIfValid(contractIds, ContractSeedCatalog.saplingForProduce(produceItemId));
 		}
-		List<Widget> contractWidgets = ContractSectionWidgets.findExisting(originalChildren, contractIds);
+		List<Widget> contractWidgets = ContractSectionWidgets.findOrCreateMissing(itemContainer, originalChildren, contractIds, bank, client);
 
 		List<Integer> preplantIds = PreplantSeeds.itemIds(config, client::getVarbitValue);
 		boolean hasReadyPreplant = !preplantIds.isEmpty();
 		preplantIds.removeAll(contractIds); // The contract section owns shared seeds and saplings.
-		preplantIds.removeIf(id -> bank.find(id) < 0);
-		List<Widget> preplantWidgets = ContractSectionWidgets.findExisting(originalChildren, preplantIds);
+		List<Widget> preplantWidgets = ContractSectionWidgets.findOrCreateMissing(itemContainer, originalChildren, preplantIds, bank, client);
 		if (hasContractToPlant || hasReadyPreplant)
 		{
 			for (int compostId : config.compost().itemIds())
@@ -217,15 +221,13 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		}
 		if (contractWidgets.isEmpty() && preplantWidgets.isEmpty())
 		{
+			restoreLayout();
 			return;
 		}
 
 		int contractHeight = contractWidgets.isEmpty() ? 0 : BankSectionLayout.sectionHeight(contractWidgets.size());
 		int preplantHeight = preplantWidgets.isEmpty() ? 0 : BankSectionLayout.sectionHeight(preplantWidgets.size());
 		int totalHeight = contractHeight + preplantHeight;
-		modifiedContainer = itemContainer;
-		originalChildrenCount = originalChildren.length;
-		originalScrollHeight = itemContainer.getScrollHeight();
 
 		for (Widget child : originalChildren)
 		{
@@ -249,9 +251,9 @@ public class FarmingContractBankSeedPlugin extends Plugin
 		itemContainer.revalidate();
 	}
 
-	private static void addIfBanked(List<Integer> items, ItemContainer bank, int itemId)
+	private static void addIfValid(List<Integer> items, int itemId)
 	{
-		if (itemId >= 0 && bank.find(itemId) >= 0)
+		if (itemId >= 0)
 		{
 			items.add(itemId);
 		}

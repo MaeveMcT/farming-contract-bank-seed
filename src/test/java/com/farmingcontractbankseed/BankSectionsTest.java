@@ -4,10 +4,13 @@ import com.google.inject.Injector;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
 import net.runelite.api.Client;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.ItemComposition;
 import net.runelite.api.Player;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
@@ -26,7 +29,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +48,7 @@ public class BankSectionsTest
 	}
 
 	@Test
-	public void preplantSectionAppearsWithoutActiveContractAndMovesOnlyVisibleBankedSeed() throws Exception
+	public void preplantSectionShowsMissingSaplingButDoesNotUnhideBankedSeedInAnotherTab() throws Exception
 	{
 		FarmingContractBankSeedPlugin plugin = new FarmingContractBankSeedPlugin();
 		Client client = mock(Client.class);
@@ -70,6 +74,7 @@ public class BankSectionsTest
 		when(bank.find(anyInt())).thenReturn(-1);
 		when(bank.find(ItemID.WATERMELON_SEED)).thenReturn(1);
 		when(bank.find(ItemID.DRAGONFRUIT_TREE_SEED)).thenReturn(2);
+		when(bank.count(ItemID.DRAGONFRUIT_TREE_SEED)).thenReturn(1);
 
 		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
 		when(config.northAllotment()).thenReturn(PreplantChoice.Allotment.WATERMELON);
@@ -83,7 +88,7 @@ public class BankSectionsTest
 		show.setAccessible(true);
 		show.invoke(plugin);
 
-		verify(container).setScrollHeight(200 + BankSectionLayout.sectionHeight(1));
+		verify(container).setScrollHeight(200 + BankSectionLayout.sectionHeight(2));
 		verify(title).setText("Preplant seeds/saplings");
 		verify(seed).setOriginalY(20);
 		verify(hidden, never()).setHidden(false);
@@ -222,7 +227,7 @@ public class BankSectionsTest
 	}
 
 	@Test
-	public void compostKeepsPreplantSectionAfterContractAndPreplantSeedsAreWithdrawn() throws Exception
+	public void missingSeedsKeepBothSectionsAndCompostJoinsContract() throws Exception
 	{
 		FarmingContractBankSeedPlugin plugin = new FarmingContractBankSeedPlugin();
 		Client client = mock(Client.class);
@@ -242,8 +247,7 @@ public class BankSectionsTest
 		ItemContainer bank = mock(ItemContainer.class);
 		when(client.getItemContainer(InventoryID.BANK)).thenReturn(bank);
 		when(bank.find(anyInt())).thenReturn(-1);
-		AtomicBoolean compostBanked = new AtomicBoolean(true);
-		when(bank.find(ItemID.BUCKET_SUPERCOMPOST)).thenAnswer(invocation -> compostBanked.get() ? 2 : -1);
+		when(bank.find(ItemID.BUCKET_SUPERCOMPOST)).thenReturn(2);
 		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
 		when(config.northAllotment()).thenReturn(PreplantChoice.Allotment.ONION);
 		when(config.compost()).thenReturn(CompostChoice.SUPERCOMPOST);
@@ -260,17 +264,63 @@ public class BankSectionsTest
 		show.invoke(plugin);
 
 		verify(title).setText("Preplant seeds/saplings");
+		verify(title).setText("Farming contract");
 		verify(compost).setOriginalY(20);
-		verify(container).setScrollHeight(BankSectionLayout.sectionHeight(1));
+		verify(container).setScrollHeight(BankSectionLayout.sectionHeight(2) + BankSectionLayout.sectionHeight(1));
+	}
 
-		compostBanked.set(false);
+	@Test
+	public void missingWidgetsAreReplacedOnRebuildAndRemovedOnShutdown() throws Exception
+	{
+		FarmingContractBankSeedPlugin plugin = new FarmingContractBankSeedPlugin();
+		Client client = mock(Client.class);
+		Player player = mock(Player.class);
+		when(client.getLocalPlayer()).thenReturn(player);
+		when(player.getWorldLocation()).thenReturn(new WorldPoint(1248, 3730, 0));
+		Widget container = mock(Widget.class);
+		Widget coins = mock(Widget.class);
+		when(coins.getItemId()).thenReturn(ItemID.COINS);
+		when(coins.getOriginalWidth()).thenReturn(36);
+		when(coins.getOriginalHeight()).thenReturn(32);
+		List<Widget> children = new ArrayList<>(Collections.singletonList(coins));
+		when(container.getChildren()).thenAnswer(invocation -> children.toArray(new Widget[0]));
+		when(container.createChild(anyInt(), anyInt())).thenAnswer(invocation -> {
+			Widget child = mock(Widget.class);
+			children.add(child);
+			return child;
+		});
+		org.mockito.Mockito.doAnswer(invocation -> {
+			children.clear();
+			children.addAll(Arrays.asList((Widget[]) invocation.getArgument(0)));
+			return null;
+		}).when(container).setChildren(any(Widget[].class));
+		when(client.getWidget(InterfaceID.Bankmain.ITEMS)).thenReturn(container);
+		when(client.getItemContainer(InventoryID.BANK)).thenReturn(mock(ItemContainer.class));
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		when(config.fruitTree()).thenReturn(PreplantChoice.FruitTree.DRAGONFRUIT);
+		inject(plugin, "client", client);
+		inject(plugin, "config", config);
+		inject(plugin, "contractManager", mock(FarmingContractManager.class));
+		start(plugin);
+
+		Method show = FarmingContractBankSeedPlugin.class.getDeclaredMethod("showBankSections");
+		show.setAccessible(true);
 		show.invoke(plugin);
-		verify(title, times(1)).setText("Preplant seeds/saplings");
-		verify(container, times(1)).createChild(-1, WidgetType.TEXT);
+		assertEquals(5, children.size()); // Original item, seed, sapling, divider, title.
+		show.invoke(plugin);
+		assertEquals(5, children.size());
+		plugin.shutDown();
+		assertEquals(Collections.singletonList(coins), children);
 	}
 
 	private static void start(FarmingContractBankSeedPlugin plugin) throws Exception
 	{
+		Field clientField = FarmingContractBankSeedPlugin.class.getDeclaredField("client");
+		clientField.setAccessible(true);
+		Client client = (Client) clientField.get(plugin);
+		ItemComposition definition = mock(ItemComposition.class);
+		when(definition.getName()).thenReturn("Seed or sapling");
+		when(client.getItemDefinition(anyInt())).thenReturn(definition);
 		inject(plugin, "overlayManager", mock(OverlayManager.class));
 		inject(plugin, "patchOverlay", mock(PreplantPatchOverlay.class));
 		inject(plugin, "inventoryOverlay", mock(PreplantInventoryOverlay.class));
