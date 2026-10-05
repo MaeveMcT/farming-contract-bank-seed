@@ -52,6 +52,8 @@ final class ContractSeedCatalog
 		seeds.put(ItemID.MARIGOLD, ItemID.MARIGOLD_SEED);
 		seeds.put(ItemID.ROSEMARY, ItemID.ROSEMARY_SEED);
 		seeds.put(ItemID.NASTURTIUM, ItemID.NASTURTIUM_SEED);
+		seeds.put(ItemID.WOADLEAF, ItemID.WOAD_SEED);
+		seeds.put(ItemID.LIMPWURT_ROOT, ItemID.LIMPWURT_SEED);
 		seeds.put(ItemID.WHITELILLY, ItemID.WHITE_LILY_SEED);
 
 		// Bushes

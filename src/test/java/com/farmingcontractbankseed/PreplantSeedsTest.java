@@ -75,6 +75,21 @@ public class PreplantSeedsTest
 	}
 
 	@Test
+	public void woadAndLimpwurtPreplantsShowTheirSeedsOnlyWhenReady()
+	{
+		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);
+		PreplantChoice.Flower[] flowers = {PreplantChoice.Flower.WOAD, PreplantChoice.Flower.LIMPWURT};
+		int[] seeds = {ItemID.WOAD_SEED, ItemID.LIMPWURT_SEED};
+		for (int i = 0; i < flowers.length; i++)
+		{
+			when(config.flower()).thenReturn(flowers[i]);
+			assertEquals(Arrays.asList(seeds[i]), PreplantSeeds.itemIds(config, id -> 0));
+			assertTrue(PreplantSeeds.itemIds(config,
+				id -> id == VarbitID.FARMING_TRANSMIT_H ? 8 : 0).isEmpty());
+		}
+	}
+
+	@Test
 	public void defaultsSelectNoPreplantSeeds()
 	{
 		FarmingContractBankSeedConfig config = mock(FarmingContractBankSeedConfig.class, CALLS_REAL_METHODS);

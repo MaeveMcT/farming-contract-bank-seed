@@ -25,7 +25,7 @@ public interface PreplantChoice
 
 	enum Flower implements PreplantChoice
 	{
-		NONE, MARIGOLD, ROSEMARY, NASTURTIUM, WHITE_LILY;
+		NONE, MARIGOLD, ROSEMARY, NASTURTIUM, WOAD, LIMPWURT, WHITE_LILY;
 
 		@Override public String toString() { return label(); }
 	}

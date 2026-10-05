@@ -10,10 +10,12 @@ public class ContractSeedCatalogTest
 	@Test
 	public void mapsEachSupportedContractCropToItsSeed()
 	{
-		assertEquals(49, ContractSeedCatalog.size());
+		assertEquals(51, ContractSeedCatalog.size());
 		assertEquals(15, ContractSeedCatalog.saplingCount());
 		assertEquals(ItemID.POTATO_SEED, ContractSeedCatalog.seedForProduce(ItemID.POTATO));
 		assertEquals(ItemID.WHITE_LILY_SEED, ContractSeedCatalog.seedForProduce(ItemID.WHITELILLY));
+		assertEquals(ItemID.WOAD_SEED, ContractSeedCatalog.seedForProduce(ItemID.WOADLEAF));
+		assertEquals(ItemID.LIMPWURT_SEED, ContractSeedCatalog.seedForProduce(ItemID.LIMPWURT_ROOT));
 		assertEquals(ItemID.TORSTOL_SEED, ContractSeedCatalog.seedForProduce(ItemID.TORSTOL));
 		assertEquals(ItemID.ACORN, ContractSeedCatalog.seedForProduce(ItemID.OAK_LOGS));
 		assertEquals(ItemID.DRAGONFRUIT_TREE_SEED, ContractSeedCatalog.seedForProduce(ItemID.DRAGONFRUIT));

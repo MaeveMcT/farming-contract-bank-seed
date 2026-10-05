@@ -33,6 +33,23 @@ public class FarmingHighlightsTest
 	}
 
 	@Test
+	public void woadAndLimpwurtContractsHighlightTheFlowerPatchAndTheirSeeds()
+	{
+		Produce[] flowers = {Produce.WOAD, Produce.LIMPWURT};
+		int[] seeds = {ItemID.WOAD_SEED, ItemID.LIMPWURT_SEED};
+		for (int i = 0; i < flowers.length; i++)
+		{
+			List<PreplantSeeds.Patch> patches = FarmingHighlights.contractPatches(flowers[i], true);
+			assertEquals(1, patches.size());
+			assertEquals(VarbitID.FARMING_TRANSMIT_H, patches.get(0).varbit);
+			assertEquals(FarmingHighlights.CONTRACT_COLOR, patches.get(0).color);
+			assertTrue(patches.get(0).matches(seeds[i]));
+			assertEquals(-1, patches.get(0).saplingId);
+			assertTrue(FarmingHighlights.contractPatches(flowers[i], false).isEmpty());
+		}
+	}
+
+	@Test
 	public void contractTreeHighlightsItsSeedAndSaplingEvenWhenOccupied()
 	{
 		List<PreplantSeeds.Patch> patches = FarmingHighlights.contractPatches(Produce.APPLE, true);
